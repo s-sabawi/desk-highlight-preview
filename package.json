@@ -1,0 +1,7 @@
+{
+  "name": "desk-highlight-vercel-editor-shell",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "scripts": { "build": "node --test", "test": "node --test" }
+}
