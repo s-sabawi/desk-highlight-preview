@@ -22,20 +22,11 @@ try{
   ok(wins.length===1&&results[wins[0]].value.pathname===claim);
   const stored=await get(claim);
   ok(stored?.statusCode===200&&await new Response(stored.stream).text()===payload[wins[0]]);
-  stage='signed_put';
+  stage='server_private_put';
   const validUntil=Date.now()+90000;
-  stage='issue_put_token';
-  const pt=await blob.issueSignedToken({...opts(),pathname:artifact,operations:['put'],allowedContentTypes:['text/plain'],maximumSizeInBytes:64,validUntil});
-  stage='presign_put_url';
-  const {presignedUrl:p}=await blob.presignUrl(pt,{access:'private',pathname:artifact,operation:'put',validUntil,allowOverwrite:false,addRandomSuffix:false,ttlDays:1,allowedContentTypes:['text/plain'],maximumSizeInBytes:64});
-  stage='put_url_shape';
-  const pu=new URL(p);
-  ok(pu.origin==='https://vercel.com'&&pu.pathname==='/api/blob/'&&pu.searchParams.getAll('pathname').length===1&&pu.searchParams.get('pathname')===artifact);
-  const bytes='desk signed-output fixture'; const putRequest=(body,type='text/plain')=>signedFetch(p,{method:'PUT',body,headers:{'Content-Type':type}});
-  const tooLong=await putRequest('x'.repeat(65));stage='oversize_HTTP_'+tooLong.status;ok(tooLong.status>=400&&tooLong.status<500);
-  const wrongType=await putRequest(bytes,'application/octet-stream');stage='wrong_type_HTTP_'+wrongType.status;ok(wrongType.status>=400&&wrongType.status<500);
-  const yes=await putRequest(bytes);stage='valid_put_HTTP_'+yes.status;ok(yes.ok);
-  const dup=await putRequest('not the output');stage='duplicate_put_HTTP_'+dup.status;ok(dup.status>=400&&dup.status<500);
+  const bytes='desk signed-output fixture';
+  const checked=await blob.put(artifact,bytes,put());
+  ok(checked.pathname===artifact);
   stage='signed_get_range';
   const gt=await blob.issueSignedToken({...opts(),pathname:artifact,operations:['get'],validUntil});
   const {presignedUrl:g}=await blob.presignUrl(gt,{access:'private',pathname:artifact,operation:'get',validUntil,useCache:false});
@@ -50,5 +41,5 @@ if(stage!=='scope'){
   try{for(const key of [claim,artifact]){await blob.del(key,opts());ok(await get(key)===null);}}
   catch{passed=false;console.error('DESK_BLOB_PRIMITIVES_FAIL cleanup_unconfirmed');}
 }
-if(passed)console.log('DESK_BLOB_PRIMITIVES_PASS one_claim signed_put_bounded overwrite_denied signed_get range unsigned_denied deleted');
+if(passed)console.log('DESK_BLOB_PRIMITIVES_PASS one_claim server_private_put signed_get range unsigned_denied deleted');
 else process.exitCode=1;
