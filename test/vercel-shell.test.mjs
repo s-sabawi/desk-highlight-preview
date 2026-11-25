@@ -37,7 +37,8 @@ test('exact ready shape makes one credential-free no-redirect same-origin GET',a
 test('allowlisted Vercel public files, no secret and API source separated',async()=>{
  const cfg=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'))
  assert.equal(cfg.outputDirectory,'public')
- assert.equal(cfg.public,false)
+ assert.equal(Object.hasOwn(cfg,'public'),false)
+ assert.ok(cfg.buildCommand.includes("process.env.VERCEL_ENV !== 'preview'"))
  assert.equal(cfg.git.deploymentEnabled['review/desk-vercel-editor-shell'],false)
  assert.deepEqual(cfg.rewrites,[{source:'/v1/:path*',destination:'/api/desk'}])
  assert.ok(cfg.headers[0].headers.some(h=>h.key==='Referrer-Policy'&&h.value==='no-referrer'))
